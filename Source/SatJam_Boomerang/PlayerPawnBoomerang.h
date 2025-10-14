@@ -1,10 +1,11 @@
+// PlayerPawnBoomerang.h
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SplineComponent.h"
-#include "DrawDebugHelpers.h"
 #include "PlayerPawnBoomerang.generated.h"
 
 class UCameraComponent;
@@ -25,11 +26,11 @@ public:
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+    /** Called by the boomerang when destroyed so the pawn can update state */
     void NotifyOwnerDestroyed();
 
-
 private:
-    // Components
+    /** Components */
     UPROPERTY(VisibleAnywhere)
     UCapsuleComponent* CapsuleComponent;
 
@@ -39,33 +40,37 @@ private:
     UPROPERTY(VisibleAnywhere)
     USplineComponent* TrajectorySpline;
 
-    // helper to sample the spline into an array of world points
-    TArray<FVector> SampleTrajectoryPoints() const;
+    /** Active boomerang spawned by player */
+    ABoomerangActor* ActiveBoomerang = nullptr;
 
+    /** Control rotation stored manually for camera orientation */
+    FRotator ControlRotation;
+
+    /** Camera offset for third-person view */
+    FVector ThirdPersonOffset;
+
+    /** Trajectory spline parameters */
     UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
     int32 NumSplinePoints = 20;
 
     UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
-    float Distance = 1000.f; // how far it travels outward
+    float Distance = 1000.f;
+
     UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
-    float CurveRadius = 300.f; // how wide the curve is
+    float CurveRadius = 300.f;
 
-	void UpdateTrajectoryPreview();
+    /** Boomerang class to spawn */
+    UPROPERTY(EditAnywhere, Category = "Boomerang")
+    TSubclassOf<ABoomerangActor> BoomerangClass;
 
-    // Input
+    /** Input callbacks */
     void LookUp(float Value);
     void Turn(float Value);
     void ThrowBoomerang();
 
-    // Boomerang class to spawn
-    UPROPERTY(EditAnywhere, Category = "Boomerang")
-    TSubclassOf<ABoomerangActor> BoomerangClass;
+    /** Update spline preview based on camera rotation */
+    void UpdateTrajectoryPreview();
 
-    // Pointer to active boomerang
-    ABoomerangActor* ActiveBoomerang = nullptr;
-
-    // Store control rotation manually
-    FRotator ControlRotation;
-
-    FVector ThirdPersonOffset;
+    /** Sample spline points into an array */
+    TArray<FVector> SampleTrajectoryPoints() const;
 };
