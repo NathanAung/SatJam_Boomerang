@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SplineComponent.h"
+#include "DrawDebugHelpers.h"
 #include "PlayerPawnBoomerang.generated.h"
 
 class UCameraComponent;
@@ -33,6 +35,22 @@ private:
 
     UPROPERTY(VisibleAnywhere)
     UCameraComponent* Camera;
+
+    UPROPERTY(VisibleAnywhere)
+    USplineComponent* TrajectorySpline;
+
+    // helper to sample the spline into an array of world points
+    TArray<FVector> SampleTrajectoryPoints() const;
+
+    UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
+    int32 NumSplinePoints = 20;
+
+    UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
+    float Distance = 1000.f; // how far it travels outward
+    UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
+    float CurveRadius = 300.f; // how wide the curve is
+
+	void UpdateTrajectoryPreview();
 
     // Input
     void LookUp(float Value);

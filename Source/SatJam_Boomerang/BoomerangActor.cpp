@@ -12,8 +12,17 @@ ABoomerangActor::ABoomerangActor()
     BoomerangMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoomerangMesh"));
     RootComponent = BoomerangMesh;
 
-    BoomerangMesh->SetSimulatePhysics(false);
-    BoomerangMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+    // Enable collision
+    BoomerangMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    BoomerangMesh->SetCollisionObjectType(ECC_PhysicsBody);
+    BoomerangMesh->SetCollisionResponseToAllChannels(ECR_Block);
+    BoomerangMesh->SetNotifyRigidBodyCollision(true); // allow OnHit to trigger
+    BoomerangMesh->SetGenerateOverlapEvents(false);
+
+    BoomerangMesh->SetSimulatePhysics(true);
+
+    // Bind OnHit event
+    BoomerangMesh->OnComponentHit.AddDynamic(this, &ABoomerangActor::OnHit);
 }
 
 
@@ -31,40 +40,96 @@ void ABoomerangActor::InitializeBoomerang(const FVector& Direction, APlayerPawnB
 }
 
 
+void ABoomerangActor::InitializeWithPath(const TArray<FVector>& InPath, APlayerPawnBoomerang* Player)
+{
+    PathPoints = InPath;
+    PlayerRef = Player;
+    bFollowingPath = PathPoints.Num() >= 2;
+    PathTime = 0.f;
+
+    // while following path we control position, so disable physics
+    BoomerangMesh->SetSimulatePhysics(false);
+}
+
 void ABoomerangActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    if (!PlayerRef) return;
 
-    ElapsedTime += DeltaTime;
+    if (bHasHitGround) return;
 
-    // Time-based progress (normalized)
-    float T = ElapsedTime / TotalFlightTime;
-
-    // Clamp to 0–1
-    if (T >= 1.0f)
+    if (bFollowingPath && PathPoints.Num() >= 2)
     {
-        Destroy();
-        return;
+        PathTime += DeltaTime;
+        float Alpha = FMath::Clamp(PathTime / TotalFlightTime, 0.f, 1.f);
+
+        int32 NumSegments = PathPoints.Num() - 1;
+        float SegF = Alpha * NumSegments;
+        int32 SegIndex = FMath::Clamp(FMath::FloorToInt(SegF), 0, NumSegments - 1);
+        float LocalT = SegF - SegIndex;
+
+        FVector StartPos = PathPoints[SegIndex];
+        FVector EndPos = PathPoints[SegIndex + 1];
+        FVector DesiredPos = FMath::Lerp(StartPos, EndPos, LocalT);
+
+        // Move with sweep so collisions are detected
+        FHitResult Hit;
+        SetActorLocation(DesiredPos, true, &Hit);
+
+        // Visual spin
+        AddActorLocalRotation(FRotator(0.f, 720.f * DeltaTime, 0.f));
+
+        // If we hit something while sweeping, switch to physics (react naturally) and schedule destruction
+        if (Hit.bBlockingHit)
+        {
+            bHasHitGround = true;
+            bFollowingPath = false;
+
+            BoomerangMesh->SetSimulatePhysics(true);
+
+            // optionally transfer small impulse so it doesn't stick exactly where hit
+            // BoommerangMesh->AddImpulseAtLocation(-Hit.ImpactNormal * 100.0f, Hit.ImpactPoint);
+
+            SetLifeSpan(3.f);
+            return;
+        }
+
+        // reached end of path
+        if (Alpha >= 1.f)
+        {
+            Destroy();
+            return;
+        }
     }
-
-    // Define start and end points
-    FVector Start = PlayerRef->GetActorLocation();
-    FVector Forward = InitialForwardDirection;
-    FVector Right = FVector::CrossProduct(Forward, FVector::UpVector).GetSafeNormal();
-
-    // Curve outward then back
-    FVector Outward = Start + Forward * (FMath::Sin(T * PI) * Distance);
-    FVector SideOffset = Right * FMath::Sin(T * 2 * PI) * CurveRadius;
-
-    // Combine
-    FVector TargetPos = Outward + SideOffset + FVector(0.f, 0.f, 50.f * FMath::Sin(T * PI)); // small vertical arc
-
-    SetActorLocation(TargetPos);
-
-    // Spin visually
-    AddActorLocalRotation(FRotator(0.f, 720.f * DeltaTime, 0.f));
+    else
+    {
+        // physics-driven behavior (if it fell to ground)
+        AddActorLocalRotation(FRotator(0.f, 720.f * DeltaTime, 0.f));
+    }
 }
+
+
+
+
+void ABoomerangActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Boomerang hit the ground!"));
+    if (bHasHitGround) return; // prevent multiple triggers
+
+    // Check if we hit something with the "WorldStatic" type (ground, walls, etc.)
+    if (OtherActor && OtherActor != this && OtherComp && OtherComp->GetCollisionObjectType() == ECC_WorldStatic)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Boomerang hit the ground!"));
+        bHasHitGround = true;
+
+        // Stop scripted flight
+        SetActorTickEnabled(false);
+
+        // Schedule destruction
+        SetLifeSpan(3.0f);
+    }
+}
+
 
 
 void ABoomerangActor::Destroyed()

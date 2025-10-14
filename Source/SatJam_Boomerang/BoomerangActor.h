@@ -19,6 +19,11 @@ protected:
 public:
     virtual void Tick(float DeltaTime) override;
 
+    UPROPERTY(EditAnywhere, Category = "Boomerang")
+    float Distance = 1000.f; // how far it travels outward
+    UPROPERTY(EditAnywhere, Category = "Boomerang")
+    float CurveRadius = 300.f; // how wide the curve is
+
 private:
     // Mesh for visual representation
     UPROPERTY(VisibleAnywhere)
@@ -38,10 +43,6 @@ private:
 
     UPROPERTY(EditAnywhere, Category = "Boomerang")
 	float TotalFlightTime = 2.5f;   // total time before returning
-    UPROPERTY(EditAnywhere, Category = "Boomerang")
-    float Distance = 1000.f; // how far it travels outward
-    UPROPERTY(EditAnywhere, Category = "Boomerang")
-    float CurveRadius = 300.f; // how wide the curve is
 
     // Internal timer for switching direction
     float ElapsedTime = 0.0f;
@@ -54,8 +55,32 @@ private:
 
     virtual void Destroyed() override;
 
+    UFUNCTION()
+    void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+    bool bHasHitGround = false;
 
 public:
     void InitializeBoomerang(const FVector& Direction, APlayerPawnBoomerang* Player);
+
+    // New members
+private:
+    // Path to follow (sampled points)
+    TArray<FVector> PathPoints;
+
+    // Whether currently following a path
+    bool bFollowingPath = false;
+
+    // progress along path in seconds
+    float PathTime = 0.f;
+
+    // radius used for sweep collision during path-following
+    UPROPERTY(EditAnywhere, Category = "Boomerang")
+    float SweepRadius = 12.f;
+
+    // New function to initialize with path
+public:
+    void InitializeWithPath(const TArray<FVector>& InPath, APlayerPawnBoomerang* Player);
 
 };
