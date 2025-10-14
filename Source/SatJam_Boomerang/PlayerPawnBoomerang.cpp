@@ -2,8 +2,10 @@
 #include "BoomerangActor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include "DrawDebugHelpers.h"
 
 APlayerPawnBoomerang::APlayerPawnBoomerang()
 {
@@ -17,34 +19,34 @@ APlayerPawnBoomerang::APlayerPawnBoomerang()
     // Camera
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(RootComponent);
-    Camera->SetRelativeLocation(FVector(0.f, 0.f, 64.f)); // roughly head height
-    Camera->bUsePawnControlRotation = false; // we’ll handle rotation manually
+    ThirdPersonOffset = FVector(150.f, 0.f, 100.f); // behind & above player
+    Camera->SetRelativeLocation(ThirdPersonOffset);
+    Camera->bUsePawnControlRotation = false; // manual rotation
 
     TrajectorySpline = CreateDefaultSubobject<USplineComponent>(TEXT("TrajectorySpline"));
     TrajectorySpline->SetupAttachment(RootComponent);
     TrajectorySpline->SetVisibility(false);
-
 }
 
 void APlayerPawnBoomerang::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Lock mouse to viewport and show/hide cursor
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-    {
-        PC->bShowMouseCursor = false;
-        PC->SetInputMode(FInputModeGameOnly());
-    }
+    // Lock mouse & hide cursor
+    //if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    //{
+    //    PC->bShowMouseCursor = true;
+    //    PC->SetInputMode(FInputModeGameOnly());
+    //}
 }
 
 void APlayerPawnBoomerang::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-	UpdateTrajectoryPreview();
+    UpdateTrajectoryPreview();
 
-    // Apply the control rotation to the camera
+    // Apply rotation to camera
     Camera->SetWorldRotation(ControlRotation);
 }
 
@@ -77,12 +79,10 @@ void APlayerPawnBoomerang::ThrowBoomerang()
 {
     if (!BoomerangClass || ActiveBoomerang) return;
 
-    // Ensure preview is current and sample it
     UpdateTrajectoryPreview();
     TArray<FVector> PathPoints = SampleTrajectoryPoints();
     if (PathPoints.Num() < 2) return;
 
-    // Spawn at first sampled point so positions line up
     FVector SpawnLocation = PathPoints[0];
     FRotator SpawnRotation = Camera->GetComponentRotation();
 
@@ -98,14 +98,11 @@ void APlayerPawnBoomerang::ThrowBoomerang()
     }
 }
 
-
-
-
 void APlayerPawnBoomerang::UpdateTrajectoryPreview()
 {
     if (!TrajectorySpline) return;
 
-    // Hide preview while a boomerang is active
+    // Hide preview if boomerang exists
     if (ActiveBoomerang)
     {
         TrajectorySpline->SetVisibility(false);
@@ -115,12 +112,11 @@ void APlayerPawnBoomerang::UpdateTrajectoryPreview()
 
     TrajectorySpline->ClearSplinePoints();
 
-    // Start from camera location so preview matches spawn origin
-    FVector Start = Camera->GetComponentLocation();
-    FVector Forward = Camera->GetForwardVector().GetSafeNormal();
+    // Start from player location
+    FVector Start = GetActorLocation();
+    FVector Forward = ControlRotation.Vector().GetSafeNormal(); // use camera rotation
     FVector Right = FVector::CrossProduct(Forward, FVector::UpVector).GetSafeNormal();
 
-    // Use the boomerang settings from the class defaults if available so preview matches runtime
     float UseDistance = Distance;
     float UseCurveRadius = CurveRadius;
 
@@ -133,26 +129,24 @@ void APlayerPawnBoomerang::UpdateTrajectoryPreview()
         }
     }
 
-    // Sample parametric path T in [0..1] and add points to spline
+    // Sample trajectory
     for (int32 i = 0; i <= NumSplinePoints; ++i)
     {
         float T = (NumSplinePoints > 0) ? (static_cast<float>(i) / NumSplinePoints) : 0.f;
 
-        // EXACT same math as boomerang path (horizontal only)
-        float sinPI_T = FMath::Sin(T * PI);             // outward profile
-        float sideSin = FMath::Sin(T * 2.0f * PI);     // side wobble
+        float sinPI_T = FMath::Sin(T * PI);
+        float sideSin = FMath::Sin(T * 2.f * PI);
 
         FVector Outward = Start + Forward * (sinPI_T * UseDistance);
         FVector SideOffset = Right * (sideSin * UseCurveRadius);
 
-        FVector Point = Outward + SideOffset; // NO vertical component
-
+        FVector Point = Outward + SideOffset;
         TrajectorySpline->AddSplinePoint(Point, ESplineCoordinateSpace::World);
     }
 
     TrajectorySpline->SetVisibility(true);
 
-    // DEBUG: draw lines between points
+    // Debug lines
     for (int32 i = 1; i <= NumSplinePoints; ++i)
     {
         FVector P1 = TrajectorySpline->GetLocationAtSplinePoint(i - 1, ESplineCoordinateSpace::World);
@@ -160,8 +154,6 @@ void APlayerPawnBoomerang::UpdateTrajectoryPreview()
         DrawDebugLine(GetWorld(), P1, P2, FColor::Green, false, -1.f, 0, 2.f);
     }
 }
-
-
 
 TArray<FVector> APlayerPawnBoomerang::SampleTrajectoryPoints() const
 {
@@ -176,11 +168,8 @@ TArray<FVector> APlayerPawnBoomerang::SampleTrajectoryPoints() const
     return Points;
 }
 
-
-
-
 void APlayerPawnBoomerang::NotifyOwnerDestroyed()
 {
     ActiveBoomerang = nullptr;
-	TrajectorySpline->SetVisibility(false);
+    TrajectorySpline->SetVisibility(true); // preview visible again
 }

@@ -66,4 +66,6 @@ private:
 
     // Store control rotation manually
     FRotator ControlRotation;
+
+    FVector ThirdPersonOffset;
 };
