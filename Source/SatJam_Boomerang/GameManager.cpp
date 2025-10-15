@@ -1,8 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// GameManager.cpp
 
 #include "GameManager.h"
 #include "BoomerangTarget.h"
+#include "TargetSpawner.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -73,7 +73,19 @@ void AGameManager::AddScore(int32 Points)
 
 void AGameManager::StopSpawner()
 {
-    
+    ATargetSpawner* targetSpawner = Cast<ATargetSpawner>(
+        UGameplayStatics::GetActorOfClass(GetWorld(), ATargetSpawner::StaticClass())
+    );
+
+    if(targetSpawner)
+    {
+        targetSpawner->StopSpawning();
+        UE_LOG(LogTemp, Warning, TEXT("Spawner stopped."));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("No TargetSpawner found in the level!"));
+	}
 }
 
 
