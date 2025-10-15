@@ -1,6 +1,7 @@
 // BoomerangActor.cpp
 
 #include "BoomerangActor.h"
+#include "GameManager.h"
 #include "Components/StaticMeshComponent.h"
 #include "BoomerangTarget.h"
 #include "Kismet/GameplayStatics.h"
@@ -158,6 +159,7 @@ void ABoomerangActor::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor
     {
         UE_LOG(LogTemp, Log, TEXT("Boomerang overlapped target: %s"), *Target->GetName());
 
+
         // Option A: let the target destroy itself (preferred)
         Target->Destroy();
 
@@ -166,6 +168,16 @@ void ABoomerangActor::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor
 
         // IMPORTANT: do not enable physics or stop following path here.
         // We want the boomerang to pass through cleanly.
+
+        // Award points through GameManager
+        AGameManager* GameManager = Cast<AGameManager>(
+            UGameplayStatics::GetActorOfClass(GetWorld(), AGameManager::StaticClass())
+        );
+
+        if (GameManager)
+        {
+            GameManager->AddScore(100);
+        }
     }
 }
 

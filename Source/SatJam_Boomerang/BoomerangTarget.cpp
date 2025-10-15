@@ -56,6 +56,7 @@ void ABoomerangTarget::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
     if (OtherActor && OtherActor->IsA(ABoomerangActor::StaticClass()))
     {
         UE_LOG(LogTemp, Log, TEXT("Target overlapped by boomerang: %s"), *GetName());
+
         Destroy();
     }
 }
