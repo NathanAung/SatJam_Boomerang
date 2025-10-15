@@ -21,11 +21,11 @@ protected:
     virtual void Destroyed() override;
 
 private:
-    /** Visual mesh */
+    // Visual mesh
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* BoomerangMesh;
 
-    /** Movement parameters */
+    // Movement parameters
     UPROPERTY(EditAnywhere, Category = "Boomerang")
     float ForwardSpeed = 1200.f;
 
@@ -38,12 +38,12 @@ private:
     float ElapsedTime = 0.f;
     bool bHasHitGround = false;
 
-    /** Path-following */
+    // Path-following
     TArray<FVector> PathPoints;
     bool bFollowingPath = false;
     float PathTime = 0.f;
 
-    /** Direction and player reference */
+    // Direction and player reference
     FVector InitialForwardDirection;
     APlayerPawnBoomerang* PlayerRef = nullptr;
 
@@ -54,13 +54,13 @@ public:
     UPROPERTY(EditAnywhere, Category = "Boomerang")
     float CurveRadius = 300.f;
 
-    /** Initialize with direction for physics-driven flight */
+    // Initialize with direction for physics-driven flight
     void InitializeBoomerang(const FVector& Direction, APlayerPawnBoomerang* Player);
 
-    /** Initialize using precomputed path points */
+    // Initialize using precomputed path points
     void InitializeWithPath(const TArray<FVector>& InPath, APlayerPawnBoomerang* Player);
 
-    /** Called on collision */
+    // Called on collision
     UFUNCTION()
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);

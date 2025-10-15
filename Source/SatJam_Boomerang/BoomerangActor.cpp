@@ -36,14 +36,16 @@ void ABoomerangActor::BeginPlay()
     Super::BeginPlay();
 }
 
-// --- Initialize for physics-driven flight ---
+
+// Initialize for physics-driven flight
 void ABoomerangActor::InitializeBoomerang(const FVector& Direction, APlayerPawnBoomerang* Player)
 {
     InitialForwardDirection = Direction;
     PlayerRef = Player;
 }
 
-// --- Initialize using precomputed spline path ---
+
+// Initialize using precomputed spline path
 void ABoomerangActor::InitializeWithPath(const TArray<FVector>& InPath, APlayerPawnBoomerang* Player)
 {
     PathPoints = InPath;
@@ -55,6 +57,7 @@ void ABoomerangActor::InitializeWithPath(const TArray<FVector>& InPath, APlayerP
     BoomerangMesh->SetSimulatePhysics(false);
 }
 
+
 void ABoomerangActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -65,14 +68,14 @@ void ABoomerangActor::Tick(float DeltaTime)
     if (bFollowingPath && PathPoints.Num() >= 2)
     {
         PathTime += DeltaTime;
-        float Alpha = FMath::Clamp(PathTime / TotalFlightTime, 0.f, 1.f);
+		float Alpha = FMath::Clamp(PathTime / TotalFlightTime, 0.f, 1.f);   // normalied (0 to 1) progress along the full trajectory
 
-        int32 NumSegments = PathPoints.Num() - 1;
-        float SegF = Alpha * NumSegments;
-        int32 SegIndex = FMath::Clamp(FMath::FloorToInt(SegF), 0, NumSegments - 1);
-        float LocalT = SegF - SegIndex;
+		int32 NumSegments = PathPoints.Num() - 1;   // total number of straight lines between points
+        float SegF = Alpha * NumSegments;   // the continuous fractional segment index (e.g., 3.25 means 25% through the 4th segment)
+		int32 SegIndex = FMath::Clamp(FMath::FloorToInt(SegF), 0, NumSegments - 1); // int of current segment
+		float LocalT = SegF - SegIndex; // decimal part, progress along current segment
 
-        FVector DesiredPos = FMath::Lerp(PathPoints[SegIndex], PathPoints[SegIndex + 1], LocalT);
+		FVector DesiredPos = FMath::Lerp(PathPoints[SegIndex], PathPoints[SegIndex + 1], LocalT);   // smoothly interpolate between the two points
 
         FHitResult Hit;
         SetActorLocation(DesiredPos, true, &Hit); // sweep enabled
@@ -97,10 +100,7 @@ void ABoomerangActor::Tick(float DeltaTime)
                 SetLifeSpan(3.f);
                 return;
             }
-            // If it's the target channel (GameTraceChannel1) it shouldn't be blocking.
-            // If you ever see the target show up here, it means its object type/response isn't set correctly.
         }
-
 
         // End of path reached
         if (Alpha >= 1.f)
@@ -111,7 +111,7 @@ void ABoomerangActor::Tick(float DeltaTime)
     }
     else
     {
-        // Physics fallback — just spinning visually
+        // Physics fallback, just spinning visually
         AddActorLocalRotation(FRotator(0.f, 720.f * DeltaTime, 0.f));
     }
 }
@@ -154,20 +154,13 @@ void ABoomerangActor::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor
 {
     if (!OtherActor || OtherActor == this) return;
 
-    // If we overlapped a boomerang target, destroy the target and keep flying.
+    // If overlapped a boomerang target, destroy the target and keep flying.
     if (ABoomerangTarget* Target = Cast<ABoomerangTarget>(OtherActor))
     {
         UE_LOG(LogTemp, Log, TEXT("Boomerang overlapped target: %s"), *Target->GetName());
 
-
-        // Option A: let the target destroy itself (preferred)
+        // let the target destroy itself
         Target->Destroy();
-
-        // Option B: if target has special logic, call it here instead of destroying directly.
-        // Target->OnHitByBoomerang();
-
-        // IMPORTANT: do not enable physics or stop following path here.
-        // We want the boomerang to pass through cleanly.
 
         // Award points through GameManager
         AGameManager* GameManager = Cast<AGameManager>(
@@ -180,8 +173,6 @@ void ABoomerangActor::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor
         }
     }
 }
-
-
 
 
 void ABoomerangActor::Destroyed()

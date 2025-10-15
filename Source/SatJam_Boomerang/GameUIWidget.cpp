@@ -3,6 +3,7 @@
 #include "GameUIWidget.h"
 #include "Components/TextBlock.h"
 
+
 void UGameUIWidget::UpdateTime(int32 SecondsLeft)
 {
     if (TimeText)
@@ -11,6 +12,7 @@ void UGameUIWidget::UpdateTime(int32 SecondsLeft)
     }
 }
 
+
 void UGameUIWidget::UpdateScore(int32 NewScore)
 {
     if (ScoreText)
@@ -18,6 +20,7 @@ void UGameUIWidget::UpdateScore(int32 NewScore)
         ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), NewScore)));
     }
 }
+
 
 void UGameUIWidget::ShowGameOverMessage()
 {

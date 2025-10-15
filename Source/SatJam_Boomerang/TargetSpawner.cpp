@@ -12,6 +12,7 @@ ATargetSpawner::ATargetSpawner()
 
 }
 
+
 // Called when the game starts or when spawned
 void ATargetSpawner::BeginPlay()
 {
@@ -26,6 +27,7 @@ void ATargetSpawner::BeginPlay()
         true // loop
     );
 }
+
 
 // Called every frame
 void ATargetSpawner::Tick(float DeltaTime)

@@ -5,6 +5,7 @@
 #include "TargetSpawner.h"
 #include "Kismet/GameplayStatics.h"
 
+
 // Sets default values
 AGameManager::AGameManager()
 {
@@ -12,6 +13,7 @@ AGameManager::AGameManager()
 	PrimaryActorTick.bCanEverTick = true;
 
 }
+
 
 // Called when the game starts or when spawned
 void AGameManager::BeginPlay()
@@ -150,6 +152,7 @@ void AGameManager::OnGameEnd()
 
     gameEnded = true;
 }
+
 
 void AGameManager::RestartGame()
 {

@@ -6,9 +6,6 @@
 #include "Blueprint/UserWidget.h"
 #include "GameUIWidget.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class SATJAM_BOOMERANG_API UGameUIWidget : public UUserWidget
 {

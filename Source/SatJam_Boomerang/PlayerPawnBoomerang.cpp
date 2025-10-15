@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerController.h"
 #include "DrawDebugHelpers.h"
 
+
 APlayerPawnBoomerang::APlayerPawnBoomerang()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -30,11 +31,12 @@ APlayerPawnBoomerang::APlayerPawnBoomerang()
     TrajectorySpline->SetVisibility(false);
 }
 
+
 void APlayerPawnBoomerang::BeginPlay()
 {
     Super::BeginPlay();
-    // No mouse lock needed in third-person
 }
+
 
 void APlayerPawnBoomerang::Tick(float DeltaTime)
 {
@@ -52,6 +54,7 @@ void APlayerPawnBoomerang::Tick(float DeltaTime)
 
 }
 
+
 void APlayerPawnBoomerang::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -64,7 +67,8 @@ void APlayerPawnBoomerang::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     PlayerInputComponent->BindAction("Throw", IE_Pressed, this, &APlayerPawnBoomerang::ThrowBoomerang);
 }
 
-// --- Input handlers ---
+
+// Input handlers
 void APlayerPawnBoomerang::Turn(float Value)
 {
     if (Value != 0.f)
@@ -76,6 +80,7 @@ void APlayerPawnBoomerang::LookUp(float Value)
     if (Value != 0.f)
         ControlRotation.Pitch = FMath::Clamp(ControlRotation.Pitch + Value, -89.f, 89.f);
 }
+
 
 void APlayerPawnBoomerang::ThrowBoomerang()
 {
@@ -105,7 +110,8 @@ void APlayerPawnBoomerang::ThrowBoomerang()
     }
 }
 
-// --- Trajectory spline preview ---
+
+// Trajectory spline preview
 void APlayerPawnBoomerang::UpdateTrajectoryPreview()
 {
     if (!TrajectorySpline) return;
@@ -141,13 +147,15 @@ void APlayerPawnBoomerang::UpdateTrajectoryPreview()
     // Sample trajectory points along the path
     for (int32 i = 0; i <= NumSplinePoints; ++i)
     {
+		// divide trajectory to evenly spaced points
+		// T ranges from 0 to 1
         float T = NumSplinePoints > 0 ? static_cast<float>(i) / NumSplinePoints : 0.f;
 
-        float sinPI_T = FMath::Sin(T * PI);
-        float sideSin = FMath::Sin(T * 2.f * PI);
+		float sinPI_T = FMath::Sin(T * PI); // forward motion: goes forward halfway through then comes back (0 > 1 > 0)
+		float sideSin = FMath::Sin(T * 2.f * PI);   // sideways swing: does a full right-left oscillation (0 > 1 > 0 > -1 > 0)
 
-        FVector Outward = Start + Forward * (sinPI_T * UseDistance);
-        FVector SideOffset = Right * (sideSin * UseCurveRadius);
+		FVector Outward = Start + Forward * (sinPI_T * UseDistance);    // scale forward motion with distance
+		FVector SideOffset = Right * (sideSin * UseCurveRadius);    // scale sideways motion with curve radius
 
         TrajectorySpline->AddSplinePoint(Outward + SideOffset, ESplineCoordinateSpace::World);
     }
@@ -163,6 +171,7 @@ void APlayerPawnBoomerang::UpdateTrajectoryPreview()
     }
 }
 
+
 // Sample spline points for boomerang path
 TArray<FVector> APlayerPawnBoomerang::SampleTrajectoryPoints() const
 {
@@ -176,6 +185,7 @@ TArray<FVector> APlayerPawnBoomerang::SampleTrajectoryPoints() const
     }
     return Points;
 }
+
 
 // Called by boomerang when destroyed
 void APlayerPawnBoomerang::NotifyOwnerDestroyed()

@@ -26,7 +26,7 @@ public:
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-    /** Called by the boomerang when destroyed so the pawn can update state */
+    // Called by the boomerang when destroyed so the pawn can update state
     void NotifyOwnerDestroyed();
 
 private:
@@ -40,16 +40,16 @@ private:
     UPROPERTY(VisibleAnywhere)
     USplineComponent* TrajectorySpline;
 
-    /** Active boomerang spawned by player */
+    // Active boomerang spawned by player
     ABoomerangActor* ActiveBoomerang = nullptr;
 
-    /** Control rotation stored manually for camera orientation */
+    // Control rotation stored manually for camera orientation
     FRotator ControlRotation;
 
-    /** Camera offset for third-person view */
+    // Camera offset for third-person view
     FVector ThirdPersonOffset;
 
-    /** Trajectory spline parameters */
+    // Trajectory spline parameters
     UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
     int32 NumSplinePoints = 20;
 
@@ -59,18 +59,18 @@ private:
     UPROPERTY(EditAnywhere, Category = "Boomerang Trajectory")
     float CurveRadius = 300.f;
 
-    /** Boomerang class to spawn */
+    // Boomerang class to spawn
     UPROPERTY(EditAnywhere, Category = "Boomerang")
     TSubclassOf<ABoomerangActor> BoomerangClass;
 
-    /** Input callbacks */
+    // Input callbacks
     void LookUp(float Value);
     void Turn(float Value);
     void ThrowBoomerang();
 
-    /** Update spline preview based on camera rotation */
+    // Update spline preview based on camera rotation
     void UpdateTrajectoryPreview();
 
-    /** Sample spline points into an array */
+    // Sample spline points into an array
     TArray<FVector> SampleTrajectoryPoints() const;
 };

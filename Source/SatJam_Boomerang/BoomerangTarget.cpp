@@ -5,6 +5,7 @@
 #include "BoomerangActor.h"
 #include "Kismet/GameplayStatics.h"
 
+
 // Constructor
 ABoomerangTarget::ABoomerangTarget()
 {
@@ -36,16 +37,13 @@ void ABoomerangTarget::BeginPlay()
 	SetLifeSpan(lifeTime);
 }
 
+
 void ABoomerangTarget::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
     // Check if hit by boomerang
     if (OtherActor && OtherActor->IsA(ABoomerangActor::StaticClass()))
     {
-        // (Optional) Play an effect or sound
-        // UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, GetActorLocation());
-        // UGameplayStatics::PlaySoundAtLocation(this, HitSound, GetActorLocation());
-
         // Destroy the target immediately
         Destroy();
     }
