@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameUIWidget.h"
 #include "GameManager.generated.h"
 
 UCLASS()
@@ -18,6 +19,16 @@ public:
 	int32 Score = 0;
 
 	void AddScore(int32 Points);
+
+    // Add UI reference
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UGameUIWidget> GameUIClass;
+
+    UPROPERTY()
+    UGameUIWidget* GameUI;
+
+    // Timer update helper
+    void UpdateUI();
 
 protected:
 	// Called when the game starts or when spawned

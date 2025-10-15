@@ -31,6 +31,9 @@ ABoomerangTarget::ABoomerangTarget()
 void ABoomerangTarget::BeginPlay()
 {
     Super::BeginPlay();
+
+	// Set timer to destroy target after lifeTime seconds
+	SetLifeSpan(lifeTime);
 }
 
 void ABoomerangTarget::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,

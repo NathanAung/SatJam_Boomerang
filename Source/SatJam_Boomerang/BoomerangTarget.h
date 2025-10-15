@@ -22,6 +22,9 @@ private:
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* TargetMesh;
 
+    UPROPERTY(EditAnywhere, Category = "Target")
+    float lifeTime = 5.0f;
+
     // Handles hit events
     UFUNCTION()
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,

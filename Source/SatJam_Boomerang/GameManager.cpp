@@ -37,6 +37,18 @@ void AGameManager::BeginPlay()
     );
 
     UE_LOG(LogTemp, Warning, TEXT("Game started. Timer set for %.1f seconds."), GameDuration);
+
+    // Create and display UI
+    if (GameUIClass)
+    {
+        GameUI = CreateWidget<UGameUIWidget>(GetWorld(), GameUIClass);
+        if (GameUI)
+        {
+            GameUI->AddToViewport();
+            GameUI->UpdateTime(FMath::RoundToInt(GameDuration));
+            GameUI->UpdateScore(Score);
+        }
+    }
 }
 
 
@@ -44,6 +56,9 @@ void AGameManager::BeginPlay()
 void AGameManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+    // Update UI
+    UpdateUI();
 
     if (gameEnded)
     {
@@ -68,6 +83,20 @@ void AGameManager::AddScore(int32 Points)
 {
     Score += Points;
     UE_LOG(LogTemp, Warning, TEXT("Score: %d"), Score);
+}
+
+
+void AGameManager::UpdateUI()
+{
+    if (GameUI)
+    {
+        // Get remaining time from timer
+        float RemainingTime = GetWorldTimerManager().GetTimerRemaining(GameTimerHandle);
+        int32 DisplayTime = FMath::Max(0, FMath::RoundToInt(RemainingTime)); // convert float to int
+        GameUI->UpdateTime(DisplayTime);
+
+        GameUI->UpdateScore(Score);
+    }
 }
 
 
@@ -114,10 +143,10 @@ void AGameManager::OnGameEnd()
     StopSpawner();
     DestroyAllTargets();
 
-    /*if (GameUI)
+    if (GameUI)
     {
-        GameUI->ShowStatusMessage(TEXT("Game Clear"));
-    }*/
+        GameUI->ShowGameOverMessage();
+    }
 
     gameEnded = true;
 }
