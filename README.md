@@ -1,4 +1,6 @@
 # SatJam_Boomerang
+言語 - C++　<br>
+エンジン - Unreal Engine
 
 ## 操作方法 
 左クリック - 撃つ
